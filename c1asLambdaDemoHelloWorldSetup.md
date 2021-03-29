@@ -2,10 +2,10 @@
 
 ## High level overview of steps (see detailed steps in next section)
 1. Clone this repo
-2. In C1AS, create a new group for the lambda function
+2. In Cloud One Application Security, create a new group for the lambda function
 3. Update the values for TREND_AP_KEY and TREND_AP_SECRET in `c1asLambdaDemoHelloWorld.yml`
 4. Deploy the updated `c1asLambdaDemoHelloWorld.yml` CloudFormation stack 
-5. Add Layer with C1AS microAgent
+5. Add a Layer with C1AS microAgent to the Lambda
 
 
 
@@ -13,8 +13,9 @@
 
 1. Clone this repo  
 cd to your projects directory
+If not already done, clone the this repository
 ```shell
-git clone https://github.com/cvdabbeele/c1SeTrain.git
+git clone https://github.com/cvdabbeele/c1devops.git
 cd c1asHelloWorld
 ```
 

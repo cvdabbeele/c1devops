@@ -1,0 +1,154 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: An Image Classification app using Lambda with a vulnerability for demos.
+
+Resources:
+  ApiGateway:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "ApplicationSecuritySampleApp"
+      Description: "API Gateway for a sample app using Application Security"
+      BinaryMediaTypes:
+      - "multipart/form-data"
+
+  ApiGatewayRootMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "ANY"
+      Integration:
+        IntegrationHttpMethod: "POST"
+        Type: "AWS_PROXY"
+        Uri: !Sub
+          - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations"
+          - lambdaArn: !GetAtt "LambdaApiGatewayHandler.Arn"
+      ResourceId: !GetAtt "ApiGateway.RootResourceId"
+      RestApiId: !Ref "ApiGateway"
+
+  ApiGatewayDeployment:
+    Type: "AWS::ApiGateway::Deployment"
+    DependsOn:
+      - "ApiGatewayRootMethod"
+    Properties:
+      RestApiId: !Ref "ApiGateway"
+      StageName: "release"
+
+
+  LambdaApiGatewayHandler:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: "Simple API Gateway Handler"
+      Environment:
+        Variables:
+          TREND_AP_KEY: [enter you Application Security Key for this Lambda Function]
+          TREND_AP_SECRET: [enter you Application Security Secret Key for this Lambda Function]
+          TREND_AP_READY_TIMEOUT: 30
+          TREND_AP_TRANSACTION_FINISH_TIMEOUT: 10
+          TREND_AP_MIN_REPORT_SIZE: 1
+          TREND_AP_INITIAL_DELAY_MS: 1
+          TREND_AP_MAX_DELAY_MS: 100
+          TREND_AP_HTTP_TIMEOUT: 5
+          TREND_AP_PREFORK_MODE: False
+          TREND_AP_CACHE_DIR: /tmp/trend_cache
+          TREND_AP_LOG_FILE: STDERR"
+      Runtime: python3.7
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              print("EVENT: %s" % (event,))
+              content = ""
+
+              if event.get("queryStringParameters") and 'file' in event["queryStringParameters"]:
+                  filename = event["queryStringParameters"]['file']
+                  try:
+                      with open(filename, 'r') as f:
+                          content = f.read()
+                          content = content.replace('\0', '\n')
+                  except BaseException:
+                      return _403()
+
+              BODY = """<!DOCTYPE html>
+              <html>
+              <head>
+                <title>Hello World</title>
+              </head>
+              <body>
+                <h3>Hello World</h3>
+
+                <form method="POST" action="" enctype="multipart/form-data">
+                  <input type="text" name="hello"/>
+                  <input type="file" name="content" />
+                  <input type="submit" />
+                </form>
+
+                <pre>%s</pre>
+              </body>
+              """ % content
+
+              return {
+                  'statusCode': 200,
+                  'headers': {
+                      'Content-Type': 'text/html; charset=utf8'
+                  },
+                  'isBase64Encoded': False,
+                  'body': BODY,
+              }
+
+
+          def _403():
+              return {
+                  'statusCode': 403,
+                  'headers': {
+                  },
+                  'isBase64Encoded': False,
+                  'body': 'Blocked',
+              }
+
+      MemorySize: 512
+      Timeout: 15
+      Role: !GetAtt "LambdaApiGatewayIAMRole.Arn"
+
+  LambdaApiGatewayInvokePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt "LambdaApiGatewayHandler.Arn"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*/"
+
+  LambdaApiGatewayIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Action: "sts:AssumeRole"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+      Policies:
+      - PolicyName: "lambda"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+            - "cloudwatch:PutMetricData"
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+
+  LambdaApiGatewayHandlerLogGroup:
+      Type: "AWS::Logs::LogGroup"
+      Properties:
+          LogGroupName: !Join ["/", ["/aws/lambda", !Ref 'LambdaApiGatewayHandler' ]]
+          RetentionInDays: 3
+
+
+Outputs:
+  ApiGatewayInvokeURL:
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/release"

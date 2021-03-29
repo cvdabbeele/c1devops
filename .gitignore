@@ -1,0 +1,11 @@
+
+.env
+work/
+backup-*/
+.remote-sync.json
+*.tmp
+*.code-workspace
+*.bak
+*.zip
+
+

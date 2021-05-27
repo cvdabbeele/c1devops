@@ -3,8 +3,9 @@
 # docker basic labs
 - [basicContainerlab](basicContainerLab.md)  
 - [containersDoNotContain](containersDoNotContain.md)  
-- [createAnImage](createAnImage.md) 
-
+- [createAnImage-dockerBuild](createAnImage-dockerBuild.md)
+- [docker-compose](docker-compose.md)
+- [cleanup](cleanup.md)
 
 # C1AS demos
 ## C1AS on a Java-based container app

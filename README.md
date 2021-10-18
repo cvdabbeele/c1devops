@@ -3,7 +3,7 @@
 # Docker basic labs
 - [basicContainerlab](basicContainerLab.md)  
 - [containersDoNotContain](containersDoNotContain.md)  
-- [createAnImage-dockerBuild](createAnImage-dockerBuild.md)
+- [createAnImage-dockerBuild](createAnImage.md)
 - [docker-compose](docker-compose.md)
 - [cleanup](cleanup.md)
 

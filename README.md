@@ -1,5 +1,6 @@
 ## contents
 
+# This project has been deprecated in June 2022
 # Docker basic labs
 - [basicContainerlab](basicContainerLab.md)  
 - [containersDoNotContain](containersDoNotContain.md)  
